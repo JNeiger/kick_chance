@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <array>
+#include <unordered_set>
 #include <random>
 #include "particle.hpp"
 #include "robot.hpp"
@@ -14,7 +15,7 @@ class Ball {
 public:
     std::vector<Particle> particles;
     std::vector<bool> valid_pass;
-    std::vector<std::vector<std::vector<int>>> robot_particles_hit; // my particle, robot id, vs their particle
+    std::vector<std::vector<std::unordered_set<int>>> robot_particles_hit; // my particle, robot id, vs their particle
 
     Ball(double x, double y,
          double kickdir, double kickspeed,
@@ -57,7 +58,7 @@ public:
             }
         }
     }
-
+    
     void check_collision(std::vector<Robot<N>> robots) {
         // For all my particles
         for (int i = 0; i < particles.size(); i++) {
@@ -72,10 +73,8 @@ public:
                     double dist = deltaX*deltaX + deltaY*deltaY;
                     double robotRadius = 0.01;
                     if (dist < robotRadius*robotRadius &&
-                        std::find(robot_particles_hit[i][r].begin(),
-                                  robot_particles_hit[i][r].end(),
-                                  p) == robot_particles_hit[i][r].end()) {
-                        robot_particles_hit[i][r].push_back(p);
+                        robot_particles_hit[i][r].find(p) == robot_particles_hit[i][r].end()) {
+                        robot_particles_hit[i][r].insert(p);
                     }
                 }
             }
@@ -101,8 +100,7 @@ public:
 
             for (auto& particle : p.front()) {
                 for (int other = 1; other < robot_particles_hit[i].size(); other++) {
-                    if (std::find(robot_particles_hit[i][other].begin(),
-                                  robot_particles_hit[i][other].end(), particle) != robot_particles_hit[i][other].end()) {
+                    if (robot_particles_hit[i][other].find(particle) != robot_particles_hit[i][other].end()) {
                         numHitsForBallParticle--;
                     }
                 }
