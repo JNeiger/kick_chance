@@ -16,7 +16,7 @@ public:
          double accelsigma) {
         
         std::random_device rd{};
-        std::mt19937 gen{rd()};
+        std::mt19937 gen{0};
         std::normal_distribution<> d{0, accelsigma};
 
         for (auto& p : particles) {
