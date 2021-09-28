@@ -68,10 +68,10 @@ int main() {
 
     double xmin = -3;
     double xmax = 3;
-    double xstep = 0.001;
+    double xstep = 0.01;
     double ymin = -3;
     double ymax = 3;
-    double ystep = 0.001;
+    double ystep = 0.01;
 
     double xthread_step = xstep * std::round(std::round((xmax - xmin) / xstep) / numThreads);
     double xlow = xmin;
