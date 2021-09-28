@@ -64,14 +64,14 @@ void doFunc(double xlow, double xhigh, double xstep,
 
 int main() {
     CSVOut csvout("out.csv");
-    int numThreads = 1;
+    int numThreads = 16;
 
-    double xmin = 1;
-    double xmax = 1;
-    double xstep = 0.1;
-    double ymin = 0;
-    double ymax = 0;
-    double ystep = 0.01;
+    double xmin = -3;
+    double xmax = 3;
+    double xstep = 0.001;
+    double ymin = -3;
+    double ymax = 3;
+    double ystep = 0.001;
 
     double xthread_step = xstep * std::round(std::round((xmax - xmin) / xstep) / numThreads);
     double xlow = xmin;
