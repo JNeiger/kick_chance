@@ -90,7 +90,7 @@ public:
                     double deltaX = myP.x - theirP.x;
                     double deltaY = myP.y - theirP.y;
                     double dist = deltaX*deltaX + deltaY*deltaY;
-                    double robotRadius = 0.01;
+                    double robotRadius = 0.2;
                     if (dist < robotRadius*robotRadius &&
                         robot_particles_hit[i][r].find(p) == robot_particles_hit[i][r].end()) {
                         robot_particles_hit[i][r].insert(p);
