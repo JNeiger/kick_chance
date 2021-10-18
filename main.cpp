@@ -30,21 +30,24 @@ void doFunc(double xlow, double xhigh, double xstep,
     constexpr int numParticles = 1000;
     for (double x = xlow; x <= xhigh; x += xstep) {
         for (double y = ylow; y <= yhigh; y += ystep) {
+            double dx = 1.5 - x;
+            double dy = 0 -  y;
+            double angle = atan2(dy, dx);
             Ball<numParticles, 2> b(x, y,
-                                    0, 1,
-                                    0.01, 0.01);
+                                    angle, 1,
+                                    0.1, 0.1);
             std::cout << x << " " << y << std::endl;
 
             std::vector<Robot<numParticles>> robots;
-            robots.emplace_back(1.5, 0,
-                                0.1, 0,
+            robots.emplace_back(1, 0,
+                                0, -0.1,
                                 0.1);
             robots.emplace_back(1, 1,
                                 0, 0.1,
                                 0.1);
 
             double t = 0;
-            double dt = 0.001;
+            double dt = 0.01;
 
             while (t < 6) {
                 b.check_line(1.5, -1, 1.5, 1);
@@ -64,14 +67,14 @@ void doFunc(double xlow, double xhigh, double xstep,
 
 int main() {
     CSVOut csvout("out.csv");
-    int numThreads = 16;
+    int numThreads = 1;
 
     double xmin = -3;
-    double xmax = 3;
-    double xstep = 0.01;
+    double xmax = 1.4;
+    double xstep = 0.1;
     double ymin = -3;
     double ymax = 3;
-    double ystep = 0.01;
+    double ystep = 0.1;
 
     double xthread_step = xstep * std::round(std::round((xmax - xmin) / xstep) / numThreads);
     double xlow = xmin;
