@@ -31,7 +31,7 @@ public:
         for (int i = 0; i < N; i++) {
             double speed = kickspeed + d1(gen);
             double theta = kickdir + d2(gen);
-            particles.emplace_back(x, y, speed*std::cos(theta), speed*std::sin(theta), 0, 0);
+            particles.emplace_back(x, y, speed*std::cos(theta), speed*std::sin(theta));
         }
 
         valid_pass.reserve(N);
@@ -72,7 +72,7 @@ public:
             double delta_pproject_y = p.y - project_y;
 
             // Within X of the end segment
-            if (delta_pproject_x*delta_pproject_x + delta_pproject_y*delta_pproject_y < 0.01) {
+            if (delta_pproject_x*delta_pproject_x + delta_pproject_y*delta_pproject_y < 0.1) {
                 valid_pass[i] = true;
             }
         }
@@ -85,8 +85,8 @@ public:
 
             for (int r = 0; r < robots.size(); r++) {
                 Robot<N>& robot = robots[r];
-                for (int p = 0; p < robot.particles.size(); p++) {
-                    Particle& theirP = robot.particles[p];
+                for (int p = 0; p < robot.particles.at(i).size(); p++) {
+                    Particle& theirP = robot.particles.at(i).at(p);
                     double deltaX = myP.x - theirP.x;
                     double deltaY = myP.y - theirP.y;
                     double dist = deltaX*deltaX + deltaY*deltaY;
@@ -100,9 +100,9 @@ public:
         }
     }
 
-    void step(double dt) {
+    void step(double t, double dt) {
         for (auto& p : particles) {
-            p.step(dt);
+            p.step(t, dt);
         }
     }
 

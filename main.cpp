@@ -24,38 +24,52 @@ private:
     std::mutex fileMutex;
 };
 
+//
+// For each ball track
+// have each robot have their own particle filter of accel/vel limits distributions
+// they try to optimally intercept that specific track
+//
+// for each ball track
+// count the number of interceptions
+//  for each robot  - pairwise
+//
+
 void doFunc(double xlow, double xhigh, double xstep,
             double ylow, double yhigh, double ystep,
             CSVOut& csvout) {
-    constexpr int numParticles = 1000;
+    constexpr int numParticles = 100;
     for (double x = xlow; x <= xhigh; x += xstep) {
         for (double y = ylow; y <= yhigh; y += ystep) {
             double dx = 1.5 - x;
             double dy = 0 -  y;
             double angle = atan2(dy, dx);
             Ball<numParticles, 2> b(x, y,
-                                    angle, 1,
+                                    angle, 3,
                                     0.1, 0.1);
             std::cout << x << " " << y << std::endl;
 
             std::vector<Robot<numParticles>> robots;
-            robots.emplace_back(1, 0,
+            robots.emplace_back(0.5, 0,
                                 0, -0.1,
-                                0.1);
-            robots.emplace_back(1, 1,
+                                1, 0.1,
+                                1, 0.1,
+                                b.particles);
+            robots.emplace_back(0.5, 1,
                                 0, 0.1,
-                                0.1);
+                                1, 0.1,
+                                1, 0.1,
+                                b.particles);
 
             double t = 0;
-            double dt = 0.01;
+            double dt = 0.025;
 
             while (t < 6) {
                 b.check_line(1.5, -1, 1.5, 1);
                 b.check_collision(robots);
 
-                b.step(dt);
+                b.step(t, dt);
                 for (auto& r : robots) {
-                    r.step(dt);
+                    r.step(t, dt);
                 }
                 t += dt;
             }
