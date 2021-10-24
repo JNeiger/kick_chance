@@ -72,6 +72,7 @@ public:
             double delta_pproject_y = p.y - project_y;
 
             // Within X of the end segment
+            // TODO Just use angle to figure out if it will intercept the line correctly
             if (delta_pproject_x*delta_pproject_x + delta_pproject_y*delta_pproject_y < 0.1) {
                 valid_pass[i] = true;
             }
