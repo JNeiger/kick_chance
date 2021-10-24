@@ -43,17 +43,17 @@ void doFunc(double xlow, double xhigh, double xstep,
             double dx = 1.5 - x;
             double dy = 0 -  y;
             double angle = atan2(dy, dx);
-            Ball<numParticles, 2> b(x, y,
-                                    angle, 3,
+            Ball<numParticles, 1> b(x, y,
+                                    angle, 1,
                                     0.1, 0.1);
             std::cout << x << " " << y << std::endl;
 
             std::vector<Robot<numParticles>> robots;
-            robots.emplace_back(0.5, 0,
-                                0, -0.1,
-                                1, 0.1,
-                                1, 0.1,
-                                b.particles);
+            // robots.emplace_back(0.5, 0,
+            //                     0, -0.1,
+            //                     1, 0.1,
+            //                     1, 0.1,
+            //                     b.particles);
             robots.emplace_back(0.5, 1,
                                 0, 0.1,
                                 1, 0.1,
