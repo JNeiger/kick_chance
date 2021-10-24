@@ -49,12 +49,12 @@ void doFunc(double xlow, double xhigh, double xstep,
             std::cout << x << " " << y << std::endl;
 
             std::vector<Robot<numParticles>> robots;
-            // robots.emplace_back(0.5, 0,
-            //                     0, -0.1,
-            //                     1, 0.1,
-            //                     1, 0.1,
-            //                     b.particles);
-            robots.emplace_back(0.5, 1,
+            robots.emplace_back(0, 0,
+                                0, -0.1,
+                                1, 0.1,
+                                1, 0.1,
+                                b.particles);
+            robots.emplace_back(0, 1,
                                 0, 0.1,
                                 1, 0.1,
                                 1, 0.1,
