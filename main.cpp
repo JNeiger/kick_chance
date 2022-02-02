@@ -6,9 +6,22 @@
 #include <thread>
 #include <mutex>
 
+struct BallInit {
+    double x, y;
+    double angle, speed;
+};
+
+struct RobotInit {
+    double x, y;
+    double xvel, yvel;
+};
+
 class CSVOut {
 public:
     CSVOut(std::string fileName) : f(fileName) {
+        f << "ballX,ballY,ballAngle,ballSpeed,";
+        f << "robot0X,robot0Y,robot0XVel,robot0YVel,";
+        f << "robot1X,robot1Y,robot1XVel,robot1YVel,";
         f << "x,y,z\n";
     }
     ~CSVOut() {
@@ -16,9 +29,13 @@ public:
         f.close();
     }
 
-    void write(double x, double y, double p) {
+    void write(BallInit b, std::vector<RobotInit> r, double x, double y, double p) {
         std::lock_guard<std::mutex> lock(fileMutex);
         std::cout << x << " " << y << " " << p << std::endl;
+        f << b.x << "," << b.y << "," << b.angle << "," << b.speed << ",";
+        for (const auto& robot : r) {
+            f << robot.x << "," << robot.y << "," << robot.xvel << "," << robot.yvel << ",";
+        }
         f << x << "," << y << "," << p << "\n";
     }
 
@@ -46,11 +63,27 @@ void doFunc(double xlow, double xhigh, double xstep,
             double dx = 1.5 - x;
             double dy = 0 -  y;
             double angle = atan2(dy, dx);
-            Ball<numParticles, 1> b(x, y,
-                                    angle, 3,
-                                    .1, 0.1);
+            BallInit ballInit;
+            ballInit.x = x;
+            ballInit.y = y;
+            ballInit.angle = angle;
+            ballInit.speed = .1;
+            Ball<numParticles, 1> b(ballInit.x, ballInit.y,
+                                    ballInit.angle, 3,
+                                    ballInit.speed, 0.1);
 
             std::vector<Robot<numParticles>> robots;
+            std::vector<RobotInit> robotInits;
+            robotInits.emplace_back();
+            robotInits[0].x = 0;
+            robotInits[0].y = 0;
+            robotInits[0].xvel = 0;
+            robotInits[0].yvel = -0.1;
+            robotInits.emplace_back();
+            robotInits[1].x = 0;
+            robotInits[1].y = 1;
+            robotInits[1].xvel = 0;
+            robotInits[1].yvel = 0.1;
             robots.emplace_back(0, 0,
                                 0, -0.1,
                                 1, 0.1,
@@ -76,7 +109,7 @@ void doFunc(double xlow, double xhigh, double xstep,
                 t += dt;
             }
 
-            csvout.write(x, y, b.calcOut());
+            csvout.write(ballInit, robotInits, x, y, b.calcOut());
         }
     }
 }
