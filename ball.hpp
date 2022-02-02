@@ -14,38 +14,24 @@
 template <int N, int M>
 class Ball {
 public:
-    std::vector<Particle> particles;
-    std::vector<bool> valid_pass;
-    std::vector<std::vector<std::unordered_set<int>>> robot_particles_hit; // my particle, robot id, vs their particle
+    std::array<Particle, N> particles;
+    std::array<bool, N> valid_pass{};
+    std::array<std::array<bool, M>, N> robot_particles_hit{}; // my particle, robot id
 
     Ball(double x, double y,
          double kickdir, double kickspeed,
          double dirsigma, double speedsigma) {
         
         std::random_device rd{};
-        std::mt19937 gen{0};
-        std::normal_distribution<> d1{0, dirsigma};
-        std::normal_distribution<> d2{0, dirsigma};
+        std::linear_congruential_engine<unsigned long, 1664525, 1013904223, static_cast<unsigned long>(pow(2, 32))> gen;
+        gen.seed(0);
+        std::normal_distribution<> direction_distibution{0, dirsigma};
+        std::normal_distribution<> speed_distribution{0, speedsigma};
 
-        particles.reserve(N);
         for (int i = 0; i < N; i++) {
-            double speed = kickspeed + d1(gen);
-            double theta = kickdir + d2(gen);
-            particles.emplace_back(x, y, speed*std::cos(theta), speed*std::sin(theta));
-        }
-
-        valid_pass.reserve(N);
-        for (int i = 0; i < N; i++) {
-            valid_pass.emplace_back(false);
-        }
-
-        robot_particles_hit.reserve(N);
-        for (int i = 0; i < N; i++) {
-            robot_particles_hit.push_back({});
-            robot_particles_hit[i].reserve(M);
-            for (int j = 0; j < M; j++) {
-                robot_particles_hit[i].push_back({});
-            }
+            double speed = kickspeed + direction_distibution(gen);
+            double theta = kickdir + speed_distribution(gen);
+            particles[i] = Particle(x, y, speed*std::cos(theta), speed*std::sin(theta));
         }
     }
 
@@ -79,23 +65,26 @@ public:
         }
     }
     
-    void check_collision(std::vector<Robot<N>> robots) {
+    void check_collision(std::vector<Robot<N>>& robots) {
         // For all my particles
         for (int i = 0; i < particles.size(); i++) {
             Particle& myP = particles[i];
 
             for (int r = 0; r < robots.size(); r++) {
                 Robot<N>& robot = robots[r];
-                for (int p = 0; p < robot.particles.at(i).size(); p++) {
-                    Particle& theirP = robot.particles.at(i).at(p);
-                    double deltaX = myP.x - theirP.x;
-                    double deltaY = myP.y - theirP.y;
-                    double dist = deltaX*deltaX + deltaY*deltaY;
-                    double robotRadius = 0.2;
-                    if (dist < robotRadius*robotRadius &&
-                        robot_particles_hit[i][r].find(p) == robot_particles_hit[i][r].end()) {
-                        robot_particles_hit[i][r].insert(p);
-                    }
+                Particle& theirP = robot.particles.at(i);
+
+                if (robot_particles_hit[i][r] == true) {
+                    continue;
+                }
+
+                double deltaX = myP.x - theirP.x;
+                double deltaY = myP.y - theirP.y;
+                double dist = deltaX*deltaX + deltaY*deltaY;
+                double robotRadius = 0.05;
+                if (dist < robotRadius*robotRadius &&
+                    robot_particles_hit[i][r] == false) {
+                    robot_particles_hit[i][r] = true;
                 }
             }
         }
@@ -108,7 +97,6 @@ public:
     }
 
     double calcOut() {
-        std::cout << "Calculating output" << std::endl;
         std::vector<std::vector<int>> setwiseAndRobotIDs;
 
         for (int numInSet = 2; numInSet <= M; numInSet++) {
@@ -159,35 +147,45 @@ public:
             }
         }
 
-        double overall_probability_hit = 0.0;
-        for (auto& ball_particle_id : robot_particles_hit) {
-            double ball_particle_probability_hit = 0.0;
-            // P(hitting robot R) = % of robot R's particle hit
-            for (auto& r : ball_particle_id) {
-                ball_particle_probability_hit += (double)r.size() / N;
-            }
-
-            // P(hitting robot R1 and R2 etc) = P(hitting robot R1) * P(hitting robot R2)
-            for (auto& set : setwiseAndRobotIDs) {
-                double overall_p = 1;
-                for (auto& id : set) {
-                    overall_p *= (double)ball_particle_id[id].size() / N;
-                }
-                ball_particle_probability_hit -= overall_p;
-            }
-
-            // P(hit|particle)*P(particle)
-            overall_probability_hit += ball_particle_probability_hit * (1.0 / N);
-        }
         
+        // Pre calculate num particles hit
+        std::array<int, M> particles_hit_per_robot{};
+        for (int robot_id = 0; robot_id < M; robot_id++) {
+            for (int i = 0; i < N; i++) {
+                if (robot_particles_hit[i][robot_id]) {
+                    ++particles_hit_per_robot[robot_id];
+                }
+            }
+        }
+
+        // Get prob
+        std::array<double, M> prob_hit_per_robot;
+        for (int robot_id = 0; robot_id < M; robot_id++) {
+            prob_hit_per_robot[robot_id] = (double)particles_hit_per_robot[robot_id] / N;
+        }
+
+        // Sum of individual probs
+        double overall_probability_hit = 0.0;
+        for (const auto& prob : prob_hit_per_robot) {
+            overall_probability_hit += prob;
+        }
+
+        // Minus setwiseAnd
+        for (auto& set : setwiseAndRobotIDs) {
+            double overall_p = 1;
+            for (auto& id : set) {
+                overall_p *= prob_hit_per_robot[id];
+            }
+            overall_probability_hit -= overall_p;
+        }
+
         double overall_probability_success = 0.0;
         for (auto ball_particle_success : valid_pass) {
             if (ball_particle_success) {
-                overall_probability_success += 1.0 * (1.0 / N);
+                overall_probability_success += (1.0 / N);
             }
         }
 
-        std::cout << overall_probability_hit << " hit " << overall_probability_success << "success" << std::endl;
         return overall_probability_success * (1 - overall_probability_hit);
     }
 };

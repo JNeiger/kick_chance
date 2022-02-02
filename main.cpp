@@ -8,15 +8,18 @@
 
 class CSVOut {
 public:
-    CSVOut(std::string fileName) : f(fileName) {}
+    CSVOut(std::string fileName) : f(fileName) {
+        f << "x,y,z\n";
+    }
     ~CSVOut() {
+        f.flush();
         f.close();
     }
 
     void write(double x, double y, double p) {
         std::lock_guard<std::mutex> lock(fileMutex);
         std::cout << x << " " << y << " " << p << std::endl;
-        f << x << "," << y << "," << p << std::endl;
+        f << x << "," << y << "," << p << "\n";
     }
 
 private:
@@ -37,16 +40,15 @@ private:
 void doFunc(double xlow, double xhigh, double xstep,
             double ylow, double yhigh, double ystep,
             CSVOut& csvout) {
-    constexpr int numParticles = 100;
+    constexpr int numParticles = 90;
     for (double x = xlow; x <= xhigh; x += xstep) {
         for (double y = ylow; y <= yhigh; y += ystep) {
             double dx = 1.5 - x;
             double dy = 0 -  y;
             double angle = atan2(dy, dx);
             Ball<numParticles, 1> b(x, y,
-                                    angle, 1,
-                                    0.1, 0.1);
-            std::cout << x << " " << y << std::endl;
+                                    angle, 3,
+                                    .1, 0.1);
 
             std::vector<Robot<numParticles>> robots;
             robots.emplace_back(0, 0,
@@ -85,10 +87,10 @@ int main() {
 
     double xmin = -3;
     double xmax = 1.4;
-    double xstep = 0.01;
+    double xstep = 0.1;
     double ymin = -3;
     double ymax = 3;
-    double ystep = 0.01;
+    double ystep = 0.1;
 
     double xthread_step = xstep * std::round(std::round((xmax - xmin) / xstep) / numThreads);
     double xlow = xmin;

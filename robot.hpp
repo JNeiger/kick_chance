@@ -10,19 +10,19 @@
 template <int N>
 class Robot {
 public:
-    std::array<std::array<Particle, N>, N> particles; // Which ball particle
-                                                      // Then which robot particle
+    std::array<Particle, N> particles;
 
     Robot(double x, double y,
          double xvel, double yvel,
          double vel_limit_mean, double vel_limit_sigma,
          double accel_limit_mean, double accel_limit_sigma,
-         const std::vector<Particle>& ball_particles) {
+         const std::array<Particle, N>& ball_particles) {
         
         std::random_device rd{};
-        std::mt19937 gen{0};
-        std::normal_distribution<> vel_dist{vel_limit_mean, vel_limit_sigma};
-        std::normal_distribution<> accel_dist{accel_limit_mean, accel_limit_sigma};
+        std::linear_congruential_engine<unsigned long, 1664525, 1013904223, static_cast<unsigned long>(pow(2, 32))> gen;
+        gen.seed(0);
+        std::normal_distribution<> vel_limit_distribution{vel_limit_mean, vel_limit_sigma};
+        std::normal_distribution<> accel_limit_distribution{accel_limit_mean, accel_limit_sigma};
 
         for (size_t ball_idx = 0; ball_idx < N; ball_idx++) {
             const Particle& ball_particle = ball_particles.at(ball_idx);
@@ -43,26 +43,21 @@ public:
             double robot_to_projected_x = projected_x - x;
             double robot_to_projected_y = projected_y - y;
 
-            // Create a robot particle with some random limit
-            for (size_t robot_particle_idx = 0; robot_particle_idx < N; robot_particle_idx++) {
-                double vel_limit = vel_dist(gen);
-                double accel_limit = accel_dist(gen);
+            double vel_limit = vel_limit_distribution(gen);
+            double accel_limit = accel_limit_distribution(gen);
 
-                particles.at(ball_idx).at(robot_particle_idx) =
-                    Particle(x, y,
-                             xvel, yvel,
-                             vel_limit, accel_limit,
-                             projected_x, projected_y,
-                             time_ball_to_projected);
-            }
+            particles.at(ball_idx) =
+                Particle(x, y,
+                        xvel, yvel,
+                        vel_limit, accel_limit,
+                        projected_x, projected_y,
+                        time_ball_to_projected);
         }
     }
 
     void step(double t, double dt) {
-        for (auto& ball_p_list : particles) {
-            for (auto& p : ball_p_list) {
-                p.step(t, dt);
-            }
+        for (auto& p : particles) {
+            p.step(t, dt);
         }
     }
 };
