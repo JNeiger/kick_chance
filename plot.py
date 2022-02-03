@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 
-fileDir = "out.csv"
+fileDir = "trained.csv" #"out.csv"
 
 data = pd.read_csv(fileDir, engine = 'c', float_precision = 'round_trip', dtype=np.float64)
 
