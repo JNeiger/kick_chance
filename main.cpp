@@ -6,16 +6,6 @@
 #include <thread>
 #include <mutex>
 
-struct BallInit {
-    double x, y;
-    double angle, speed;
-};
-
-struct RobotInit {
-    double x, y;
-    double xvel, yvel;
-};
-
 class CSVOut {
 public:
     CSVOut(std::string fileName) : f(fileName) {
@@ -56,6 +46,7 @@ private:
 
 void doFunc(double xlow, double xhigh, double xstep,
             double ylow, double yhigh, double ystep,
+            BallInit ballInit, std::vector<RobotInit> robotInits,
             CSVOut& csvout) {
     constexpr int numParticles = 90;
     for (double x = xlow; x <= xhigh; x += xstep) {
@@ -63,36 +54,15 @@ void doFunc(double xlow, double xhigh, double xstep,
             double dx = 1.5 - x;
             double dy = 0 -  y;
             double angle = atan2(dy, dx);
-            BallInit ballInit;
             ballInit.x = x;
             ballInit.y = y;
             ballInit.angle = angle;
-            ballInit.speed = .1;
-            Ball<numParticles, 1> b(ballInit.x, ballInit.y,
-                                    ballInit.angle, 3,
-                                    ballInit.speed, 0.1);
+            Ball<numParticles, 1> b(ballInit);
 
-            std::vector<Robot<numParticles>> robots;
-            std::vector<RobotInit> robotInits;
-            robotInits.emplace_back();
-            robotInits[0].x = 0;
-            robotInits[0].y = 0;
-            robotInits[0].xvel = 0;
-            robotInits[0].yvel = -0.1;
-            robotInits.emplace_back();
-            robotInits[1].x = 0;
-            robotInits[1].y = 1;
-            robotInits[1].xvel = 0;
-            robotInits[1].yvel = 0.1;
-            robots.emplace_back(0, 0,
-                                0, -0.1,
-                                1, 0.1,
-                                1, 0.1,
+            std::vector<Robot<numParticles>> robots;            
+            robots.emplace_back(robotInits[0],
                                 b.particles);
-            robots.emplace_back(0, 1,
-                                0, 0.1,
-                                1, 0.1,
-                                1, 0.1,
+            robots.emplace_back(robotInits[1],
                                 b.particles);
 
             double t = 0;
@@ -120,10 +90,37 @@ int main() {
 
     double xmin = -3;
     double xmax = 1.4;
-    double xstep = 0.1;
+    double xstep = 0.01;
     double ymin = -3;
     double ymax = 3;
-    double ystep = 0.1;
+    double ystep = 0.01;
+
+    BallInit ballInit;
+    ballInit.speed = 3;
+    
+    std::vector<RobotInit> robotInits;
+    robotInits.emplace_back();
+    robotInits.emplace_back();
+    robotInits[0].x = 0;
+    robotInits[0].y = 0;
+    robotInits[0].xvel = 0;
+    robotInits[0].yvel = -0.1;
+    robotInits[1].x = 0;
+    robotInits[1].y = 1;
+    robotInits[1].xvel = 0;
+    robotInits[1].yvel = 0.1;
+
+
+    ballInit.angle_stddev = 0.1;
+    ballInit.speed_stddev = 0.1;
+    robotInits[0].vel_limit_mean = 1;
+    robotInits[0].vel_limit_stddev = 0.1;
+    robotInits[0].accel_limit_mean = 1;
+    robotInits[0].accel_limit_stddev = 0.1;
+    robotInits[1].vel_limit_mean = 1;
+    robotInits[1].vel_limit_stddev = 0.1;
+    robotInits[1].accel_limit_mean = 1;
+    robotInits[1].accel_limit_stddev = 0.1;
 
     double xthread_step = xstep * std::round(std::round((xmax - xmin) / xstep) / numThreads);
     double xlow = xmin;
@@ -132,6 +129,7 @@ int main() {
     for (int i = 0; i < numThreads; i++) {
         threads.emplace_back(std::thread(doFunc, xlow, xhigh, xstep,
                                      ymin, ymax, ystep,
+                                     ballInit, robotInits,
                                      std::ref(csvout)));
         xlow += xthread_step;
         xhigh += xthread_step;

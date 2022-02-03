@@ -9,6 +9,12 @@
 #include "particle.hpp"
 #include "robot.hpp"
 
+struct BallInit {
+    double x = 0, y = 0;
+    double angle = 0, speed = 0;
+    double angle_stddev = 0, speed_stddev = 0;
+};
+
 // N num particles
 // M num robots
 template <int N, int M>
@@ -18,20 +24,18 @@ public:
     std::array<bool, N> valid_pass{};
     std::array<std::array<bool, M>, N> robot_particles_hit{}; // my particle, robot id
 
-    Ball(double x, double y,
-         double kickdir, double kickspeed,
-         double dirsigma, double speedsigma) {
+    Ball(BallInit init) {
         
         std::random_device rd{};
         std::linear_congruential_engine<unsigned long, 1664525, 1013904223, static_cast<unsigned long>(pow(2, 32))> gen;
         gen.seed(0);
-        std::normal_distribution<> direction_distibution{0, dirsigma};
-        std::normal_distribution<> speed_distribution{0, speedsigma};
+        std::normal_distribution<> direction_distibution{0, init.angle_stddev};
+        std::normal_distribution<> speed_distribution{0, init.speed_stddev};
 
         for (int i = 0; i < N; i++) {
-            double speed = kickspeed + direction_distibution(gen);
-            double theta = kickdir + speed_distribution(gen);
-            particles[i] = Particle(x, y, speed*std::cos(theta), speed*std::sin(theta));
+            double speed = init.speed + direction_distibution(gen);
+            double theta = init.angle + speed_distribution(gen);
+            particles[i] = Particle(init.x, init.y, speed*std::cos(theta), speed*std::sin(theta));
         }
     }
 
